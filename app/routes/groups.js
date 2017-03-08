@@ -31,16 +31,42 @@ module.exports = function (mongoose, app, apiRoutes) {
 
     apiRoutes.put('/groups/:groupId', function (req, res) {
         //tbd: check if user is admin of the group
-        
+
         Group.findByIdAndUpdate(req.params.groupId, req.body.group, function (err, doc) {
             if (err) {
-                return res.send(500, { success: false, message: err });
+                return res.send(500, { success: false, message: "Group not found" });
             }
             else {
                 return res.json({success: true, group: doc});
             }
         })
         
+    })
+
+    apiRoutes.put('/groups/:groupId/addMember', function (req, res) {
+        //tbd: check if user is admin of the group
+        //tbd: check if requested user exist
+        //tbd: untested
+
+        Group
+            .findByID(req.params.groupId)
+            .exec(function (err, group) {
+                if (err) {
+                    res.send(500, { success: false, message: "Group not found" });
+                }
+                else {
+                    group.members.push(req.body.members);
+                    group.save(function (err, group) {
+                        if (err) {
+                            res.send(500, { success: false, message: "Group could not be modified" });
+                        }else{
+                            res.json({success: true, group: group});
+                        }
+
+                    })
+                }
+            });
+
     })
 
 
