@@ -30,44 +30,61 @@ module.exports = function (mongoose, app, apiRoutes) {
     });
 
     apiRoutes.put('/groups/:groupId', function (req, res) {
-        //tbd: check if user is admin of the group
+      isUserAdminOfGroup(req.decoded.user_id, req.params.groupId, function (admin) {
+          if (admin){
+          Group.findByIdAndUpdate(req.params.groupId, req.body.group, {new: true}, function (err, doc) {
+              if (err) {
+                  res.send(500, { success: false, message: "Group not found" });
+              }
+              else {
+                  res.json({success: true, group: doc});
+              }
+          });
+      }else{
+            res.status(403).send({success: false, message: "User is not admin!"});
+        }
+      });
 
-        Group.findByIdAndUpdate(req.params.groupId, req.body.group, function (err, doc) {
-            if (err) {
-                return res.send(500, { success: false, message: "Group not found" });
-            }
-            else {
-                return res.json({success: true, group: doc});
-            }
-        })
-        
+
+
+
+
     })
 
-    apiRoutes.put('/groups/:groupId/addMember', function (req, res) {
+    apiRoutes.put('/groups/:groupId/addMembers', function (req, res) {
         //tbd: check if user is admin of the group
         //tbd: check if requested user exist
-        //tbd: untested
+        //tbd: not working for multiple users
 
         Group
-            .findByID(req.params.groupId)
-            .exec(function (err, group) {
-                if (err) {
-                    res.send(500, { success: false, message: "Group not found" });
-                }
-                else {
-                    group.members.push(req.body.members);
-                    group.save(function (err, group) {
-                        if (err) {
-                            res.send(500, { success: false, message: "Group could not be modified" });
-                        }else{
-                            res.json({success: true, group: group});
-                        }
-
-                    })
-                }
+            .findByIdAndUpdate(
+            req.params.groupId,
+            {$push: {
+                "members": {
+                $each: [{_id: "bla1", admin: false},{_id: "dada", admin: false}]
+            }}},
+            {safe: true, upsert: true},
+            function(err, model) {
+                res.status(500).send({ success: false, message: "Adding member failed" });
             });
 
     })
+    
 
 
+}
+
+isUserAdminOfGroup = function (user_id, group_id, callback) {
+    Group
+        .findById(group_id)
+        .exec(function (err, group) {
+            if (group.members.findIndex(function (element, index, array) {
+                    return element._id === user_id && element.admin === true
+                }) != -1){
+                return callback(true);
+            }else{
+                return callback(false);
+            }
+
+        });
 }
