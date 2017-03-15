@@ -11,9 +11,24 @@ module.exports = function (mongoose, app, apiRoutes) {
             .find({})
             .where('members._id').in([req.decoded.user_id])
             .exec(function (err, groups) {
-                res.json({'group': groups});
+                res.status(500).send({success: false, message: "Failed loading group"})
             });
     });
+    
+    apiRoutes.get('/groups/:groupId', function (req, res) {
+        Group
+            .findById(req.params.groupId)
+            .where('members._id').in([req.decoded.user_id])
+            .exec(function (err, groups) {
+                if (err){
+                    res.status(500).send({success: false, message: "Failed loading group"})
+                }else if (groups === null){
+                    res.status(500).send({success: false, message: "Failed loading group"})
+                }else{
+                    res.json({'group': groups});
+                }
+            });
+    })
 
     apiRoutes.post('/groups/', function (req, res) {
         var group = new Group({
@@ -35,7 +50,7 @@ module.exports = function (mongoose, app, apiRoutes) {
             if (admin) {
                 Group.findByIdAndUpdate(req.params.groupId, req.body.group, {new: true}, function (err, doc) {
                     if (err) {
-                        res.send(500, {success: false, message: "Group not found"});
+                        res.status(500).send({success: false, message: "Group not found"});
                     }
                     else {
                         res.json({success: true, group: doc});

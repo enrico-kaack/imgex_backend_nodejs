@@ -16,7 +16,7 @@ POST /login      email, password in body-form, return success, token
 ___
 #### Group
 GET /groups        return success, groups  
-MISSING GET /grouos/:groupId  
+GET /grouos/:groupId  return success, group
 MISSING DELETE /groups/:groupId  
 POST /groups     body-json: {"group":{"name": "name of group" }}, return success, group  
 PUT /groups/:groupId    body-json: {"group":{"name": "name of group" }}, return success, group  
